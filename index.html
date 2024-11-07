@@ -204,15 +204,20 @@
         const adminPassword = "Jahid@126";
 
         async function loadTeams() {
-            const response = await fetch('http://localhost:3000/teams');
-            const teams = await response.json();
-            document.getElementById("teamTable").innerHTML = <tr>
-                <th>Team Leader</th>
-                <th>Group Number</th>
-                <th>Presentation Title</th>
-                <th>Actions</th>
-            </tr>;
-            teams.forEach(addTeamToTable);
+            try {
+                const response = await fetch('http://localhost:3000/teams');
+                const teams = await response.json();
+                const table = document.getElementById("teamTable");
+                table.innerHTML = `<tr>
+                    <th>Team Leader</th>
+                    <th>Group Number</th>
+                    <th>Presentation Title</th>
+                    <th>Actions</th>
+                </tr>`;
+                teams.forEach(addTeamToTable);
+            } catch (error) {
+                console.error("Error loading teams:", error);
+            }
         }
 
         async function addTeam() {
@@ -248,38 +253,61 @@
 
         async function deleteTeam(leader, group, row) {
             const password = prompt("Enter Admin Password to delete this entry:");
+            if (password !== adminPassword) {
+                alert("Incorrect password.");
+                return;
+            }
 
             try {
                 const response = await fetch('http://localhost:3000/teams', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ leader, group, password })
+                    body: JSON.stringify({ leader, group })
                 });
-                const result = await response.json();
                 if (response.ok) {
                     row.remove();
-                    alert(result.message);
                 } else {
-                    alert(result.error);
+                    const error = await response.json();
+                    console.error("Error deleting team:", error.error);
                 }
             } catch (error) {
                 console.error("Error:", error);
             }
         }
 
-        function addTeamToTable(team) {
+        function addTeamToTable({ leader, group, presentation }) {
             const table = document.getElementById("teamTable");
-            const newRow = table.insertRow();
-            newRow.insertCell(0).textContent = team.leader;
-            newRow.insertCell(1).textContent = team.group;
-            newRow.insertCell(2).textContent = team.presentation;
+            const row = table.insertRow();
+            row.insertCell(0).textContent = leader;
+            row.insertCell(1).textContent = group;
+            row.insertCell(2).textContent = presentation;
 
-            const actionsCell = newRow.insertCell(3);
-            const deleteButton = document.createElement("button");
-            deleteButton.textContent = "Delete";
-            deleteButton.className = "delete-btn";
-            deleteButton.onclick = () => deleteTeam(team.leader, team.group, newRow);
-            actionsCell.appendChild(deleteButton);
+            const actionsCell = row.insertCell(3);
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-btn";
+            deleteBtn.textContent = "Delete";
+            deleteBtn.onclick = () => deleteTeam(leader, group, row);
+            actionsCell.appendChild(deleteBtn);
+        }
+
+        async function downloadTeams() {
+            try {
+                const response = await fetch('http://localhost:3000/teams');
+                const teams = await response.json();
+                let csvContent = "data:text/csv;charset=utf-8,Team Leader,Group Number,Presentation Title\n";
+                teams.forEach(({ leader, group, presentation }) => {
+                    csvContent += `${leader},${group},${presentation}\n`;
+                });
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "teams.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error("Error downloading teams:", error);
+            }
         }
 
         loadTeams();

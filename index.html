@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Permanent Presentation Team Entry</title>
     <style>
+        /* CSS Styles remain the same */
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -208,6 +209,12 @@
             const teams = JSON.parse(localStorage.getItem("teams")) || [];
             const table = document.getElementById("teamTable");
 
+            // Clear any existing table data first
+            while (table.rows.length > 1) {
+                table.deleteRow(1);
+            }
+
+            // Add each team to the table
             teams.forEach(team => {
                 const row = table.insertRow();
                 row.insertCell(0).textContent = team.leader;
@@ -239,34 +246,27 @@
 
             const teams = JSON.parse(localStorage.getItem("teams")) || [];
             if (teams.some(team => team.leader === teamLeader && team.group === groupNumber)) {
-                errorMessage.textContent = "This team leader and group number combination already exists.";
+                errorMessage.textContent = "This team already exists.";
                 return;
             }
 
-            const newTeam = { leader: teamLeader, group: groupNumber, presentation: presentationTitle };
+            const newTeam = {
+                leader: teamLeader,
+                group: groupNumber,
+                presentation: presentationTitle
+            };
+
             teams.push(newTeam);
             localStorage.setItem("teams", JSON.stringify(teams));
 
-            const table = document.getElementById("teamTable");
-            const row = table.insertRow();
-            row.insertCell(0).textContent = newTeam.leader;
-            row.insertCell(1).textContent = newTeam.group;
-            row.insertCell(2).textContent = newTeam.presentation;
-            
-            const actionCell = row.insertCell(3);
-            const deleteButton = document.createElement("button");
-            deleteButton.textContent = "Delete";
-            deleteButton.className = "delete-btn";
-            deleteButton.onclick = () => deleteTeam(newTeam.leader, newTeam.group, row);
-            actionCell.appendChild(deleteButton);
-
+            // Reload the table with new data
+            loadTeams();
             document.getElementById("teamForm").reset();
         }
 
         // Function to delete a team
         function deleteTeam(leader, group, row) {
             const password = prompt("Enter Admin Password to delete this entry:");
-
             if (password === adminPassword) {
                 let teams = JSON.parse(localStorage.getItem("teams")) || [];
                 teams = teams.filter(team => !(team.leader === leader && team.group === group));
@@ -293,7 +293,7 @@
             link.click();
         }
 
-        loadTeams(); // Load the teams from localStorage when the page loads
+        loadTeams(); // Load the teams when the page loads
     </script>
 </body>
 </html>

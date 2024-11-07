@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permanent Presentation Team Entry</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('https://media.istockphoto.com/id/1197239452/photo/fern-leaves-on-dark-background-in-jungle-dense-dark-green-fern-leaves-in-garden-at-night.jpg?s=612x612&w=0&k=20&c=-fT1-Y4drWnWrxQRYAnUJAKvVfuQa55Iput1dhTBnL4=');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.8);
+            text-align: center;
+            backdrop-filter: blur(10px);
+            z-index: 2;
+            position: relative;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            color: #00FF99;
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px #00FF99, 0 0 30px #00FF99;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], button {
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 1em;
+            border-radius: 12px;
+            border: 2px solid #333;
+            background-color: #222;
+            color: #e0e0e0;
+            box-shadow: 0px 0px 10px rgba(0, 255, 153, 0.6);
+            transition: all 0.3s ease-in-out;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border: 2px solid #00FF99;
+            box-shadow: 0px 0px 15px rgba(0, 255, 153, 1);
+        }
+
+        button {
+            background-color: #00FF99;
+            color: #121212;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 0 10px #00FF99, 0 0 20px #00FF99;
+        }
+
+        button:hover {
+            background-color: #00cc7a;
+            box-shadow: 0 0 20px #00FF99, 0 0 40px #00FF99;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            overflow-x: auto;
+            display: block;
+        }
+
+        table, th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: center;
+            background-color: #bfd6c5;
+        }
+
+        th {
+            background-color: #00FF99;
+            color: #121212;
+            text-shadow: 0 0 5px #00FF99;
+        }
+
+        tr:nth-child(even) {
+            background-color: #333;
+        }
+
+        tr:hover {
+            background-color: #444;
+            box-shadow: 0 0 15px rgba(0, 255, 153, 0.8);
+        }
+
+        .delete-btn {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+            border-radius: 8px;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .delete-btn:hover {
+            background-color: #ff3333;
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.7);
+        }
+
+        .error {
+            color: #ff4444;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .message-box {
+            color: #00FF99;
+            margin: 10px 0;
+            font-size: 1em;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            input[type="text"], button {
+                font-size: 0.9em;
+            }
+            .delete-btn {
+                font-size: 0.8em;
+                padding: 8px 12px;
+            }
+            table, th, td {
+                padding: 8px;
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Presentation Team Entry</h1>
+        <form id="teamForm">
+            <input type="text" id="teamLeader" placeholder="Enter Team Leader Name" required>
+            <input type="text" id="groupNumber" placeholder="Enter Group Number" required>
+            <input type="text" id="presentationTitle" placeholder="Enter Presentation Title" required>
+            <button type="button" onclick="addTeam()">Add Team</button>
+        </form>
+
+        <div id="errorMessage" class="error"></div>
+
+        <table id="teamTable">
+            <tr>
+                <th>Team Leader</th>
+                <th>Group Number</th>
+                <th>Presentation Title</th>
+                <th>Actions</th>
+            </tr>
+        </table>
+
+        <button type="button" onclick="downloadTeams()">Download as CSV</button>
+    </div>
+
+    <script>
+        const adminPassword = "Jahid@126";
+
+        async function loadTeams() {
+            const response = await fetch('http://localhost:3000/teams');
+            const teams = await response.json();
+            document.getElementById("teamTable").innerHTML = `<tr>
+                <th>Team Leader</th>
+                <th>Group Number</th>
+                <th>Presentation Title</th>
+                <th>Actions</th>
+            </tr>`;
+            teams.forEach(addTeamToTable);
+        }
+
+        async function addTeam() {
+            const teamLeader = document.getElementById("teamLeader").value.trim();
+            const groupNumber = document.getElementById("groupNumber").value.trim();
+            const presentationTitle = document.getElementById("presentationTitle").value.trim();
+            const errorMessage = document.getElementById("errorMessage");
+
+            errorMessage.textContent = '';
+
+            if (!teamLeader || !groupNumber || !presentationTitle) {
+                errorMessage.textContent = "All fields are required.";
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/teams', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leader: teamLeader, group: groupNumber, presentation: presentationTitle })
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    errorMessage.textContent = error.error;
+                    return;
+                }
+                await loadTeams();
+                document.getElementById("teamForm").reset();
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        async function deleteTeam(leader, group, row) {
+            const password = prompt("Enter Admin Password to delete this entry:");
+
+            try {
+                const response = await fetch('http://localhost:3000/teams', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leader, group, password })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    row.remove();
+                    alert(result.message);
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        function addTeamToTable(team) {
+            const table = document.getElementById("teamTable");
+            const newRow = table.insertRow();
+            newRow.insertCell(0).textContent = team.leader;
+            newRow.insertCell(1).textContent = team.group;
+            newRow.insertCell(2).textContent = team.presentation;
+
+            const actionsCell = newRow.insertCell(3);
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.className = "delete-btn";
+            deleteButton.onclick = () => deleteTeam(team.leader, team.group, newRow);
+            actionsCell.appendChild(deleteButton);
+        }
+
+        loadTeams();
+    </script>
+</body>
+</html>

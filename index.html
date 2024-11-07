@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Permanent Presentation Team Entry</title>
     <style>
-        /* CSS Styles remain the same */
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -202,36 +201,21 @@
     </div>
 
     <script>
-        const adminPassword = "Jahid@126"; // Admin password for deletion
+        const adminPassword = "Jahid@126";
 
-        // Function to load teams from localStorage
-        function loadTeams() {
-            const teams = JSON.parse(localStorage.getItem("teams")) || [];
-            const table = document.getElementById("teamTable");
-
-            // Clear any existing table data first
-            while (table.rows.length > 1) {
-                table.deleteRow(1);
-            }
-
-            // Add each team to the table
-            teams.forEach(team => {
-                const row = table.insertRow();
-                row.insertCell(0).textContent = team.leader;
-                row.insertCell(1).textContent = team.group;
-                row.insertCell(2).textContent = team.presentation;
-                
-                const actionCell = row.insertCell(3);
-                const deleteButton = document.createElement("button");
-                deleteButton.textContent = "Delete";
-                deleteButton.className = "delete-btn";
-                deleteButton.onclick = () => deleteTeam(team.leader, team.group, row);
-                actionCell.appendChild(deleteButton);
-            });
+        async function loadTeams() {
+            const response = await fetch('http://localhost:3000/teams');
+            const teams = await response.json();
+            document.getElementById("teamTable").innerHTML = <tr>
+                <th>Team Leader</th>
+                <th>Group Number</th>
+                <th>Presentation Title</th>
+                <th>Actions</th>
+            </tr>;
+            teams.forEach(addTeamToTable);
         }
 
-        // Function to add a team
-        function addTeam() {
+        async function addTeam() {
             const teamLeader = document.getElementById("teamLeader").value.trim();
             const groupNumber = document.getElementById("groupNumber").value.trim();
             const presentationTitle = document.getElementById("presentationTitle").value.trim();
@@ -244,56 +228,61 @@
                 return;
             }
 
-            const teams = JSON.parse(localStorage.getItem("teams")) || [];
-            if (teams.some(team => team.leader === teamLeader && team.group === groupNumber)) {
-                errorMessage.textContent = "This team already exists.";
-                return;
+            try {
+                const response = await fetch('http://localhost:3000/teams', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leader: teamLeader, group: groupNumber, presentation: presentationTitle })
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    errorMessage.textContent = error.error;
+                    return;
+                }
+                await loadTeams();
+                document.getElementById("teamForm").reset();
+            } catch (error) {
+                console.error("Error:", error);
             }
-
-            const newTeam = {
-                leader: teamLeader,
-                group: groupNumber,
-                presentation: presentationTitle
-            };
-
-            teams.push(newTeam);
-            localStorage.setItem("teams", JSON.stringify(teams));
-
-            // Reload the table with new data
-            loadTeams();
-            document.getElementById("teamForm").reset();
         }
 
-        // Function to delete a team
-        function deleteTeam(leader, group, row) {
+        async function deleteTeam(leader, group, row) {
             const password = prompt("Enter Admin Password to delete this entry:");
-            if (password === adminPassword) {
-                let teams = JSON.parse(localStorage.getItem("teams")) || [];
-                teams = teams.filter(team => !(team.leader === leader && team.group === group));
-                localStorage.setItem("teams", JSON.stringify(teams));
-                row.remove();
-                alert("Team deleted successfully.");
-            } else {
-                alert("Incorrect password.");
+
+            try {
+                const response = await fetch('http://localhost:3000/teams', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leader, group, password })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    row.remove();
+                    alert(result.message);
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                console.error("Error:", error);
             }
         }
 
-        // Function to download the teams as CSV
-        function downloadTeams() {
-            const teams = JSON.parse(localStorage.getItem("teams")) || [];
-            let csvContent = "Team Leader,Group Number,Presentation Title\n";
-            teams.forEach(team => {
-                csvContent += `${team.leader},${team.group},${team.presentation}\n`;
-            });
+        function addTeamToTable(team) {
+            const table = document.getElementById("teamTable");
+            const newRow = table.insertRow();
+            newRow.insertCell(0).textContent = team.leader;
+            newRow.insertCell(1).textContent = team.group;
+            newRow.insertCell(2).textContent = team.presentation;
 
-            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "teams.csv";
-            link.click();
+            const actionsCell = newRow.insertCell(3);
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.className = "delete-btn";
+            deleteButton.onclick = () => deleteTeam(team.leader, team.group, newRow);
+            actionsCell.appendChild(deleteButton);
         }
 
-        loadTeams(); // Load the teams when the page loads
+        loadTeams();
     </script>
 </body>
 </html>
